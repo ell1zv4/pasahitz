@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pasahitza Seguru</title>
+    <link rel="icon" type="image/x-icon" href="/password.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 400px;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            margin-bottom: 10px;
+            display: block;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="password"] {
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="password"]:focus {
+            border-color: #007bff;
+        }
+
+        .message {
+            margin-top: 10px;
+            text-align: left;
+            display: none;
+            list-style: none;
+            padding: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .message.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .requirement {
+            margin: 5px 0;
+            font-size: 16px;
+            padding: 8px;
+            border-radius: 5px;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        .safe {
+            color: green;
+            background-color: rgba(0, 255, 0, 0.1);
+        }
+
+        .unsafe {
+            color: red;
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+
+        .requirement .tick {
+            margin-right: 10px;
+            font-size: 20px;
+            display: none;
+        }
+
+        .requirement .cross {
+            margin-right: 10px;
+            font-size: 20px;
+            display: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            opacity: 0.5;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        button.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .success-message {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background: #dff0d8;
+            border: 1px solid #d6e9c6;
+            border-radius: 5px;
+            color: #3c763d;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sartu zure pasahitza</h1>
+        <label for="passwordInput">Pasahitza:</label>
+        <input type="password" id="passwordInput" required>
+        <ul id="securityMessage" class="message">
+            <li id="lengthRequirement" class="requirement"><span class="cross">❌</span><span class="tick">✅</span> Gutxienez 8 karaktere</li>
+            <li id="numberRequirement" class="requirement"><span class="cross">❌</span><span class="tick">✅</span> Gutxienez zenbaki bat</li>
+            <li id="uppercaseRequirement" class="requirement"><span class="cross">❌</span><span class="tick">✅</span> Gutxienez letra maiuskulak</li>
+            <li id="specialCharRequirement" class="requirement"><span class="cross">❌</span><span class="tick">✅</span> Gutxienez karaktere berezi bat</li>
+        </ul>
+        <button id="submitButton">Bidali</button>
+        <div id="successMessage" class="success-message">Pasahitza seguru: <span id="copiedPassword"></span></div>
+    </div>
+
+    <script>
+        const passwordInput = document.getElementById('passwordInput');
+        const securityMessage = document.getElementById('securityMessage');
+        const lengthRequirement = document.getElementById('lengthRequirement');
+        const numberRequirement = document.getElementById('numberRequirement');
+        const uppercaseRequirement = document.getElementById('uppercaseRequirement');
+        const specialCharRequirement = document.getElementById('specialCharRequirement');
+        const tickLength = lengthRequirement.querySelector('.tick');
+        const tickNumber = numberRequirement.querySelector('.tick');
+        const tickUppercase = uppercaseRequirement.querySelector('.tick');
+        const tickSpecialChar = specialCharRequirement.querySelector('.tick');
+        const crossLength = lengthRequirement.querySelector('.cross');
+        const crossNumber = numberRequirement.querySelector('.cross');
+        const crossUppercase = uppercaseRequirement.querySelector('.cross');
+        const crossSpecialChar = specialCharRequirement.querySelector('.cross');
+        const submitButton = document.getElementById('submitButton');
+        const successMessage = document.getElementById('successMessage');
+        const copiedPassword = document.getElementById('copiedPassword');
+
+        passwordInput.addEventListener('input', function() {
+            const password = passwordInput.value;
+
+            securityMessage.classList.add('show');
+
+            const isLongEnough = password.length >= 8;
+            const hasNumber = /\d/.test(password);
+            const hasUppercase = /[A-Z]/.test(password);
+            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+            if (isLongEnough) {
+                lengthRequirement.classList.add('safe');
+                lengthRequirement.classList.remove('unsafe');
+                tickLength.style.display = 'inline';
+                crossLength.style.display = 'none';
+            } else {
+                lengthRequirement.classList.remove('safe');
+                lengthRequirement.classList.add('unsafe');
+                tickLength.style.display = 'none';
+                crossLength.style.display = 'inline';
+            }
+
+            if (hasNumber) {
+                numberRequirement.classList.add('safe');
+                numberRequirement.classList.remove('unsafe');
+                tickNumber.style.display = 'inline';
+                crossNumber.style.display = 'none';
+            } else {
+                numberRequirement.classList.remove('safe');
+                numberRequirement.classList.add('unsafe');
+                tickNumber.style.display = 'none';
+                crossNumber.style.display = 'inline';
+            }
+
+            if (hasUppercase) {
+                uppercaseRequirement.classList.add('safe');
+                uppercaseRequirement.classList.remove('unsafe');
+                tickUppercase.style.display = 'inline';
+                crossUppercase.style.display = 'none';
+            } else {
+                uppercaseRequirement.classList.remove('safe');
+                uppercaseRequirement.classList.add('unsafe');
+                tickUppercase.style.display = 'none';
+                crossUppercase.style.display = 'inline';
+            }
+
+            if (hasSpecialChar) {
+                specialCharRequirement.classList.add('safe');
+                specialCharRequirement.classList.remove('unsafe');
+                tickSpecialChar.style.display = 'inline';
+                crossSpecialChar.style.display = 'none';
+            } else {
+                specialCharRequirement.classList.remove('safe');
+                specialCharRequirement.classList.add('unsafe');
+                tickSpecialChar.style.display = 'none';
+                crossSpecialChar.style.display = 'inline';
+            }
+
+            const allRequirementsMet = isLongEnough && hasNumber && hasUppercase && hasSpecialChar;
+            if (allRequirementsMet) {
+                submitButton.classList.add('active');
+                submitButton.disabled = false;
+            } else {
+                submitButton.classList.remove('active');
+                submitButton.disabled = true;
+            }
+        });
+
+        submitButton.addEventListener('click', function() {
+            successMessage.classList.add('show');
+            copiedPassword.textContent = passwordInput.value;
+            passwordInput.value = '';
+            securityMessage.classList.remove('show');
+            submitButton.classList.remove('active');
+            submitButton.disabled = true;
+        });
+    </script>
+</body>
+</html>
